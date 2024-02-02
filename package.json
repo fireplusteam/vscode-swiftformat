@@ -1,26 +1,26 @@
 {
-  "name": "vscode-swiftformat-fixed",
-  "displayName": "SwiftFormat",
-  "description": "Formatting Swift code with nicklockwood/SwiftFormat.",
+  "name": "vscode-swiftformat-xcode",
+  "displayName": "XCode Swift Formatter",
+  "description": "Formatting Swift code with nicklockwood/SwiftFormat like in Xcode.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vknabel/vscode-swiftformat"
+    "url": "https://github.com/fireplusteam/vscode-swiftformat.git"
   },
-  "version": "1.7.2",
+  "version": "1.7.7",
   "license": "MIT",
   "author": {
-    "name": "Valentin Knabel",
-    "email": "dev@vknabel.com",
-    "url": "https://github.com/vknabel"
+    "name": "Ievgenii Mykhalevskyi",
+    "email": "fireplusteam@gmail.com",
+    "url": "https://github.com/fireplusteam"
   },
-  "publisher": "vknabel",
+  "publisher": "fireplusteam",
   "icon": "assets/icon.png",
   "galleryBanner": {
     "color": "#FC823F",
     "theme": "light"
   },
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.86.0"
   },
   "categories": [
     "Formatters",
@@ -34,7 +34,8 @@
     "swift",
     "swiftformat",
     "prettifier",
-    "formatter"
+    "formatter",
+    "xcode"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -53,22 +54,22 @@
       "type": "object",
       "title": "SwiftFormat Configuration",
       "properties": {
-        "swiftformat.enable": {
+        "xcode.swiftformat.enable": {
           "type": "boolean",
           "default": true,
           "description": "Whether SwiftFormat should actually start up on this project."
         },
-        "swiftformat.onlyEnableOnSwiftPMProjects": {
+        "xcode.swiftformat.onlyEnableOnSwiftPMProjects": {
           "type": "boolean",
           "default": false,
           "description": "Only allows the extension to load up when SwiftFormat is available via Swift PM."
         },
-        "swiftformat.onlyEnableWithConfig": {
+        "xcode.swiftformat.onlyEnableWithConfig": {
           "type": "boolean",
           "default": false,
           "description": "Only use SwiftFormat when a config exists."
         },
-        "swiftformat.path": {
+        "xcode.swiftformat.path": {
           "description": "The location of your globally installed SwiftFormat.",
           "scope": "machine-overridable",
           "default": [
@@ -93,7 +94,7 @@
             }
           ]
         },
-        "swiftformat.options": {
+        "xcode.swiftformat.options": {
           "type": "array",
           "default": [],
           "description": "Additional options for SwiftFormat: https://github.com/nicklockwood/SwiftFormat#options",
@@ -101,7 +102,7 @@
             "type": "string"
           }
         },
-        "swiftformat.configSearchPaths": {
+        "xcode.swiftformat.configSearchPaths": {
           "type": "array",
           "default": [
             ".swiftformat"

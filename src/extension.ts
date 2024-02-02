@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { SwiftFormatEditProvider } from "./SwiftFormatEditProvider";
 import Current from "./Current";
 import { promisify } from "util";
-import * as fs from 'fs';
+import * as fs from "fs";
 import * as path from "path";
 import { exec } from "child_process";
 
@@ -31,16 +31,28 @@ export function activate(context: vscode.ExtensionContext) {
       swiftSelector,
       editProvider,
       "\n",
+      "{",
+      "}",
+      "(",
+      ")",
+      "[",
+      "]",
+      ".",
+      ",",
+      ":",
+      "=",
     );
   });
 }
 
 // Find Package.swift file for swiftformat
-async function filterManifestsForSwiftformat(manifests: vscode.Uri[]): Promise<vscode.Uri[]> {
+async function filterManifestsForSwiftformat(
+  manifests: vscode.Uri[],
+): Promise<vscode.Uri[]> {
   const filteredManifests: vscode.Uri[] = [];
   for (const manifest of manifests) {
-    const content = await fs.promises.readFile(manifest.fsPath, 'utf8');
-    if (content.includes('SwiftFormat')) {
+    const content = await fs.promises.readFile(manifest.fsPath, "utf8");
+    if (content.includes("SwiftFormat")) {
       filteredManifests.push(manifest);
     }
   }

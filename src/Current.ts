@@ -48,7 +48,7 @@ export function prodEnvironment(): Current {
         }`.replace(/\\n/, " ");
         const body = "`" + (error.stack || JSON.stringify(error)) + "`";
         await Current.editor.openURL(
-          url`https://github.com/vknabel/vscode-swiftformat/issues/new?title=${title}&body=${body}`,
+          url`https://github.com/fireplusteam/vscode-swiftformat/issues/new?title=${title}&body=${body}`,
         );
       },
       showErrorMessage: <T extends string>(message: string, ...actions: T[]) =>
@@ -65,16 +65,15 @@ export function prodEnvironment(): Current {
     },
     config: {
       isEnabled: () =>
-        vscode.workspace.getConfiguration().get("swiftformat.enable", true),
+        vscode.workspace.getConfiguration().get("xcode.swiftformat.enable", true),
       onlyEnableOnSwiftPMProjects: () =>
         vscode.workspace
           .getConfiguration()
-          .get("swiftformat.onlyEnableOnSwiftPMProjects", false),
+          .get("xcode.swiftformat.onlyEnableOnSwiftPMProjects", false),
       onlyEnableWithConfig: () =>
         vscode.workspace
           .getConfiguration()
-          .get("swiftformat.onlyEnableWithConfig", false),
-
+          .get("xcode.swiftformat.onlyEnableWithConfig", false),
       swiftFormatPath: (document: vscode.TextDocument) => {
         // Grab the project root from the local workspace
         const workspace = vscode.workspace.getWorkspaceFolder(document.uri);
@@ -101,15 +100,15 @@ export function prodEnvironment(): Current {
       resetSwiftFormatPath: () =>
         vscode.workspace
           .getConfiguration()
-          .update("swiftformat.path", undefined),
+          .update("xcode.swiftformat.path", undefined),
       configureSwiftFormatPath: () =>
         vscode.commands.executeCommand("workbench.action.openSettings"),
       formatOptions: () =>
-        vscode.workspace.getConfiguration().get("swiftformat.options", []),
+        vscode.workspace.getConfiguration().get("xcode.swiftformat.options", []),
       formatConfigSearchPaths: () =>
         vscode.workspace
           .getConfiguration()
-          .get("swiftformat.configSearchPaths", [".swiftformat"])
+          .get("xcode.swiftformat.configSearchPaths", [".swiftformat"])
           .map(absolutePath),
     },
   };
@@ -121,7 +120,7 @@ const fallbackGlobalSwiftFormatPath = (): string[] | null => {
   }
   let path = vscode.workspace
     .getConfiguration()
-    .get<string[] | string | null>("swiftformat.path", null);
+    .get<string[] | string | null>("xcode.swiftformat.path", null);
 
   if (typeof path === "string") {
     return [path];
