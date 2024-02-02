@@ -1,5 +1,5 @@
 {
-  "name": "vscode-swiftformat",
+  "name": "vscode-swiftformat-fixed",
   "displayName": "SwiftFormat",
   "description": "Formatting Swift code with nicklockwood/SwiftFormat.",
   "repository": {
@@ -120,8 +120,8 @@
     "format": "prettier --write ./*.json ./**/*.ts"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "@types/vscode": "^1.80.0",
+    "@types/node": "^18.17.17",
+    "@types/vscode": "^1.86.0",
     "prettier": "^3.0.3",
     "typescript": "^5.2.2"
   },
