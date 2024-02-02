@@ -4,6 +4,7 @@ import { handleFormatError } from "./UserInteraction";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { execShellSync } from "./execShell";
+import { request } from "http";
 
 const wholeDocumentRange = new vscode.Range(
   0,
@@ -35,6 +36,49 @@ function userDefinedFormatOptionsForDocument(document: vscode.TextDocument): {
   return { options, hasConfig: existingConfig != null };
 }
 
+function getStartLine(document: vscode.TextDocument, range?: vscode.Range) {
+  let prefix_range = new vscode.Range(
+    new vscode.Position(0, 0),
+    range?.end || wholeDocumentRange.end
+  )
+  let prefix_whole_text = document.getText(prefix_range)
+  let input = document.getText(range)
+  let stack: string[] = []
+
+  console.log(prefix_whole_text)
+  
+  let indent = ""
+  for (let i = prefix_whole_text.length - input.length; i >= 0; --i) {
+    if (prefix_whole_text[i] == '{') {
+      if (stack.length == 0) {
+        // found start of indent
+        // parse the indent prefix
+        for (let j = i - 1; j >= 0; --j) { 
+          if (prefix_whole_text[j] == '\n') { 
+            for (let k = j + 1; k < i; ++k) { 
+              if (prefix_whole_text[k].trim().length != 0) {
+                break;
+              }
+              indent += prefix_whole_text[k];
+            }
+            break;
+          }
+          break;
+        }
+      } else { 
+        stack.pop()
+      }
+    }
+    else if (prefix_whole_text[i] == '}') { 
+      stack.push('}')
+    }
+  }
+  if (indent === "") { 
+    return ""
+  }
+  return indent + '{'
+}
+
 function format(request: {
   document: vscode.TextDocument;
   parameters?: string[];
@@ -46,7 +90,9 @@ function format(request: {
     if (swiftFormatPath == null) {
       return [];
     }
-    const input = request.document.getText(request.range);
+    const indentPrefix = getStartLine(request.document, request.range)
+    const input = indentPrefix + "\n" + request.document.getText(request.range);
+    console.log(input)
     if (input.trim() === "") return [];
     const userDefinedParams = userDefinedFormatOptionsForDocument(
       request.document,
@@ -72,7 +118,7 @@ function format(request: {
       fileName = "/" + fileName;
     }
 
-    const newContents = execShellSync(
+    let newContents = execShellSync(
       swiftFormatPath[0],
       [
         ...swiftFormatPath.slice(1),
@@ -88,6 +134,8 @@ function format(request: {
         input,
       },
     );
+    const indexOfNextLine = newContents.indexOf("\n")
+    newContents = newContents.substring(0, indexOfNextLine)
     return newContents !== request.document.getText(request.range)
       ? [
           vscode.TextEdit.replace(
