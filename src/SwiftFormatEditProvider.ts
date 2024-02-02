@@ -55,16 +55,13 @@ function getStartLine(document: vscode.TextDocument, range?: vscode.Range) {
         // parse the indent prefix
         for (let j = i - 1; j >= 0; --j) { 
           if (prefix_whole_text[j] == '\n') { 
-            for (let k = j + 1; k < i; ++k) { 
-              if (prefix_whole_text[k].trim().length != 0) {
-                break;
-              }
+            for (let k = j + 1; k <= i; ++k) { 
               indent += prefix_whole_text[k];
             }
             break;
           }
-          break;
         }
+        break;
       } else { 
         stack.pop()
       }
@@ -76,7 +73,7 @@ function getStartLine(document: vscode.TextDocument, range?: vscode.Range) {
   if (indent === "") { 
     return ""
   }
-  return indent + '{'
+  return indent + " let Some_Random_Prefix_To_Formatt_sfsdgfgdfgdsdf = 0"
 }
 
 function format(request: {
@@ -90,8 +87,13 @@ function format(request: {
     if (swiftFormatPath == null) {
       return [];
     }
-    const indentPrefix = getStartLine(request.document, request.range)
-    const input = indentPrefix + "\n" + request.document.getText(request.range);
+    const rangeFromBeginingOfLine = new vscode.Range(
+      new vscode.Position(request.range?.start.line || 0, 0),
+      request.range?.end || wholeDocumentRange.end
+    )
+
+    const indentPrefix = getStartLine(request.document, rangeFromBeginingOfLine)
+    const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginingOfLine);
     console.log(input)
     if (input.trim() === "") return [];
     const userDefinedParams = userDefinedFormatOptionsForDocument(
@@ -134,12 +136,16 @@ function format(request: {
         input,
       },
     );
-    const indexOfNextLine = newContents.indexOf("\n")
-    newContents = newContents.substring(0, indexOfNextLine)
-    return newContents !== request.document.getText(request.range)
+    const indexOfNextLine = indentPrefix.length
+    if (newContents[indexOfNextLine] == '\n') {
+      newContents = newContents.substring(indexOfNextLine + 1)
+    } else {
+      newContents = newContents.substring(indexOfNextLine)
+    }
+    return newContents !== request.document.getText(rangeFromBeginingOfLine)
       ? [
           vscode.TextEdit.replace(
-            request.document.validateRange(request.range || wholeDocumentRange),
+            request.document.validateRange(rangeFromBeginingOfLine || wholeDocumentRange),
             newContents,
           ),
         ]
@@ -181,9 +187,17 @@ export class SwiftFormatEditProvider
     formatting: vscode.FormattingOptions,
   ) {
     // Don't format if user has inserted an empty line
-    if (document.lineAt(position.line).text.trim() === "") {
+    if (position.line >= 0 && document.lineAt(position.line - 1).text.trim() === "") {
       return [];
     }
-    return format({ document, formatting });
+    const range = new vscode.Range(
+      new vscode.Position(position.line - 1, 0), 
+      new vscode.Position(position.line, position.character)
+    )
+    return format({
+      document,
+      range,
+      formatting
+    });
   }
 }
