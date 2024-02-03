@@ -30,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
       swiftSelector,
       editProvider,
       "\n",
+      "{", "}"
     );
   });
 }

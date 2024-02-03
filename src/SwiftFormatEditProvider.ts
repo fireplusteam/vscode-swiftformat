@@ -5,6 +5,7 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { execShellSync } from "./execShell";
 import { request } from "http";
+import { start } from "repl";
 
 const wholeDocumentRange = new vscode.Range(
   0,
@@ -36,44 +37,58 @@ function userDefinedFormatOptionsForDocument(document: vscode.TextDocument): {
   return { options, hasConfig: existingConfig != null };
 }
 
-function getStartLine(document: vscode.TextDocument, range?: vscode.Range) {
-  let prefix_range = new vscode.Range(
-    new vscode.Position(0, 0),
-    range?.end || wholeDocumentRange.end
-  )
-  let prefix_whole_text = document.getText(prefix_range)
-  let input = document.getText(range)
-  let stack: string[] = []
+const randomLineFormatterId = "Some_Random_Prefix_To_Formatt_sfsdgfgdfgdsdf"
 
-  console.log(prefix_whole_text)
-  
-  let indent = ""
-  for (let i = prefix_whole_text.length - input.length; i >= 0; --i) {
-    if (prefix_whole_text[i] == '{') {
-      if (stack.length == 0) {
-        // found start of indent
-        // parse the indent prefix
-        for (let j = i - 1; j >= 0; --j) { 
-          if (prefix_whole_text[j] == '\n') { 
-            for (let k = j + 1; k <= i; ++k) { 
-              indent += prefix_whole_text[k];
-            }
-            break;
+function getStartLine(document: vscode.TextDocument, position: vscode.Position, isInMiddle: boolean = true) {
+  let stack: string[] = []
+  for (let lineInd = position.line - (isInMiddle ? 1 : 0); lineInd >= 0; --lineInd) {
+    const line = document.lineAt(lineInd).text;
+    for (let charIndx = line.length - 1; charIndx >= 0; charIndx--) { 
+      if (line[charIndx] == '{') {
+        if (stack.length == 0 && isInMiddle == true) {
+          return new vscode.Position(lineInd, charIndx);
+        } else {
+          stack.pop();
+          if (stack.length == 0 && isInMiddle == false) { 
+            return new vscode.Position(lineInd, charIndx);
           }
         }
-        break;
-      } else { 
-        stack.pop()
+      } else if (line[charIndx] == '}') { 
+        stack.push("}");
       }
     }
-    else if (prefix_whole_text[i] == '}') { 
-      stack.push('}')
-    }
   }
+  return new vscode.Position(0, 0);
+}
+
+function getIndentLine(document: vscode.TextDocument, range?: vscode.Range) {
+  const startLine = getStartLine(document, range?.start || wholeDocumentRange.start)
+  
+  // found start of indent
+  // parse the indent prefix
+  let indent = document.getText(
+    new vscode.Range(
+      new vscode.Position(startLine.line, 0),
+      new vscode.Position((range?.start.line || 1), 0)
+    )
+  )
+     
   if (indent === "") { 
     return ""
   }
-  return indent + " let Some_Random_Prefix_To_Formatt_sfsdgfgdfgdsdf = 0"
+  return indent + "\n" + randomLineFormatterId
+}
+
+function getIndexOfCut(line: string) { 
+  for (let i = line.length - 1; i >= 0; --i) {
+    if (line[i].trim() == "") {
+      if (line[i] == "\n") {
+        return i;
+      }
+    } else { 
+      return i + 1;
+    }
+  }
 }
 
 function format(request: {
@@ -92,8 +107,8 @@ function format(request: {
       request.range?.end || wholeDocumentRange.end
     )
 
-    const indentPrefix = getStartLine(request.document, rangeFromBeginingOfLine)
-    const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginingOfLine);
+    const indentPrefix = getIndentLine(request.document, rangeFromBeginingOfLine)
+    const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginingOfLine) + " " + randomLineFormatterId;
     console.log(input)
     if (input.trim() === "") return [];
     const userDefinedParams = userDefinedFormatOptionsForDocument(
@@ -136,12 +151,15 @@ function format(request: {
         input,
       },
     );
-    const indexOfNextLine = indentPrefix.length
+    const indexOfNextLine = newContents.indexOf(randomLineFormatterId) + randomLineFormatterId.length
     if (newContents[indexOfNextLine] == '\n') {
       newContents = newContents.substring(indexOfNextLine + 1)
     } else {
       newContents = newContents.substring(indexOfNextLine)
     }
+    newContents = newContents.substring(0, newContents.length - randomLineFormatterId.length);
+    newContents = newContents.substring(0, getIndexOfCut(newContents));
+
     return newContents !== request.document.getText(rangeFromBeginingOfLine)
       ? [
           vscode.TextEdit.replace(
@@ -187,15 +205,30 @@ export class SwiftFormatEditProvider
     formatting: vscode.FormattingOptions,
   ) {
     // Don't format if user has inserted an empty line
-    if (position.line >= 0 && document.lineAt(position.line - 1).text.trim() === "") {
-      return [];
+    let startLine = position.line;
+    let endLine = position.line;
+    if (ch == "\n") {
+      startLine -= 1;
+      if (position.line >= 0 && document.lineAt(startLine).text.trim() === "") {
+        return [];
+      }
+      if (document.lineAt(position.line).text.trim() === "") {
+        endLine--;
+      }
+      if (startLine > endLine) {
+        return [];
+      }
+    } else if (ch == '}') { 
+      startLine = getStartLine(document, position, false).line; 
     }
+
     const range = new vscode.Range(
-      new vscode.Position(position.line - 1, 0), 
-      new vscode.Position(position.line, position.character)
+      new vscode.Position(startLine, 0), 
+      new vscode.Position(endLine, Number.MAX_SAFE_INTEGER)
     )
     return format({
       document,
+      parameters: ["--fragment", "true"],
       range,
       formatting
     });
