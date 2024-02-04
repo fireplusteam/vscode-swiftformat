@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import Current from "./Current";
 import { handleFormatError } from "./UserInteraction";
 import { existsSync, open } from "fs";
-import { resolve } from "path";
+import { relative, resolve } from "path";
 import { execShellSync } from "./execShell";
 import { request } from "http";
 import { start } from "repl";
@@ -39,7 +39,7 @@ function userDefinedFormatOptionsForDocument(document: vscode.TextDocument): {
 
 const randomLineFormatterId = "Some_Random_Prefix_To_Formatt_sfsdgfgdfgdsdf_gdfgd_dfhjpqtrrF"
 
-function getStartLine(document: vscode.TextDocument, position: vscode.Position, openBracket = "{", closeBracket = "}") {
+function getStartLine(document: vscode.TextDocument, position: vscode.Position, openBracket = "{", closeBracket = "}", relative = false) {
   let stack: string[] = []
 
   const line = document.lineAt(position.line).text;
@@ -61,7 +61,7 @@ function getStartLine(document: vscode.TextDocument, position: vscode.Position, 
           return new vscode.Position(lineInd, charIndx);
         } else {
           stack.pop();
-          if (stack.length == 0) { 
+          if (stack.length == 0 && relative == false) { 
             return new vscode.Position(lineInd, charIndx);
           }
         }
@@ -74,14 +74,20 @@ function getStartLine(document: vscode.TextDocument, position: vscode.Position, 
 }
 
 function getIndentLine(document: vscode.TextDocument, range?: vscode.Range) {
-  const startLine = wholeDocumentRange.start;
+  const startLine = getStartLine(document, range?.start || wholeDocumentRange.start, "{", "}", true)
   
   let indent = document.getText(
     new vscode.Range(
       new vscode.Position(startLine.line, 0),
-      new vscode.Position((range?.start.line || 0), 0)
+      new vscode.Position(range?.start.line || 0, 0)
     )
   )
+  for (let i = 0; i < indent.length; ++i) {
+    if (indent[i].trim() != "") {
+      indent = indent.substring(0, i) + "func" + indent.substring(i);
+      break;
+    } 
+  }
   // added comment with random formatted id, which is guardian range
   return indent + "\n//" + randomLineFormatterId
 }
@@ -94,7 +100,7 @@ function getIndexOfCut(line: string) {
       }
     } else {
       if (i >= 1 && line[i] == '/' && line[i - 1] == '/') {
-        if (i >= 2 && line[i - 2] == ' ')
+        if (i >= 2 && line[i - 2] == ' ' && line.substring(0, i - 2).trim() !== "")
           return i - 2;
         return i - 1;
       }
@@ -170,7 +176,8 @@ function format(request: {
     } else {
       newContents = newContents.substring(indexOfNextLine)
     }
-    newContents = newContents.substring(0, newContents.length - randomLineFormatterId.length);
+    const lastIndexOfRandomLine = newContents.lastIndexOf(randomLineFormatterId);
+    newContents = newContents.substring(0, lastIndexOfRandomLine);
     newContents = newContents.substring(0, getIndexOfCut(newContents));
 
     return newContents !== request.document.getText(rangeFromBeginningOfLine)
