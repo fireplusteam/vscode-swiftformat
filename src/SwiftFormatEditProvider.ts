@@ -115,13 +115,13 @@ function format(request: {
     if (swiftFormatPath == null) {
       return [];
     }
-    const rangeFromBeginingOfLine = new vscode.Range(
+    const rangeFromBeginningOfLine = new vscode.Range(
       new vscode.Position(request.range?.start.line || 0, 0),
       request.range?.end || wholeDocumentRange.end
     )
 
-    const indentPrefix = getIndentLine(request.document, rangeFromBeginingOfLine)
-    const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginingOfLine) + "//" + randomLineFormatterId;
+    const indentPrefix = getIndentLine(request.document, rangeFromBeginningOfLine)
+    const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginningOfLine) + "//" + randomLineFormatterId;
     console.log(input)
     if (input.trim() === "") return [];
     const userDefinedParams = userDefinedFormatOptionsForDocument(
@@ -173,10 +173,10 @@ function format(request: {
     newContents = newContents.substring(0, newContents.length - randomLineFormatterId.length);
     newContents = newContents.substring(0, getIndexOfCut(newContents));
 
-    return newContents !== request.document.getText(rangeFromBeginingOfLine)
+    return newContents !== request.document.getText(rangeFromBeginningOfLine)
       ? [
           vscode.TextEdit.replace(
-            request.document.validateRange(rangeFromBeginingOfLine || wholeDocumentRange),
+            request.document.validateRange(rangeFromBeginningOfLine || wholeDocumentRange),
             newContents,
           ),
         ]
