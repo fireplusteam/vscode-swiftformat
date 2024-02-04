@@ -47,7 +47,7 @@ function getStartLine(document: vscode.TextDocument, position: vscode.Position, 
   const line = document.lineAt(position.line).text;
   for (let charIndx = line.length - 1; charIndx >= 0; charIndx--) { 
     if (openBracket.indexOf(line[charIndx]) != -1) {
-      if (stack.length != 0 && line[charIndx] == stack[0]) {
+      if (stack.length != 0 && line[charIndx] == stack[stack.length - 1]) {
         stack.pop();
       }
     } else {
@@ -69,7 +69,7 @@ function getStartLine(document: vscode.TextDocument, position: vscode.Position, 
         if (stack.length == 0) {
           return new vscode.Position(lineInd, charIndx);
         } else {
-          if (line[charIndx] != stack[0]) // bracket is wrong, here we should finish
+          if (line[charIndx] != stack[stack.length - 1]) // bracket is wrong, here we should finish
             return new vscode.Position(lineInd, charIndx);
           stack.pop();
           if (stack.length == 0 && relative == false) { 
