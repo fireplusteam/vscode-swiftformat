@@ -117,8 +117,8 @@ function format(request: {
     }
     const rangeFromBeginningOfLine = new vscode.Range(
       new vscode.Position(request.range?.start.line || 0, 0),
-      request.range?.end || wholeDocumentRange.end
-    )
+      new vscode.Position(request.range?.end.line || wholeDocumentRange.end.line, wholeDocumentRange.end.character)
+    );
 
     const indentPrefix = getIndentLine(request.document, rangeFromBeginningOfLine)
     const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginningOfLine) + "//" + randomLineFormatterId;
