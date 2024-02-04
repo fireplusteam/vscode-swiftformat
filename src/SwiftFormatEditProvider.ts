@@ -39,34 +39,48 @@ function userDefinedFormatOptionsForDocument(document: vscode.TextDocument): {
 
 const randomLineFormatterId = "Some_Random_Prefix_To_Formatt_sfsdgfgdfgdsdf_gdfgd_dfhjpqtrrF"
 
+/// open and close brackets should batch each other
+/// if open brackets is "{(" should be "})"
 function getStartLine(document: vscode.TextDocument, position: vscode.Position, openBracket = "{", closeBracket = "}", relative = false) {
   let stack: string[] = []
 
   const line = document.lineAt(position.line).text;
   for (let charIndx = line.length - 1; charIndx >= 0; charIndx--) { 
-    if (line[charIndx] == openBracket) {
-      if (stack.length != 0) {
+    if (openBracket.indexOf(line[charIndx]) != -1) {
+      if (stack.length != 0 && line[charIndx] == stack[0]) {
         stack.pop();
       }
-    } else if (line[charIndx] == closeBracket) { 
-      stack.push(closeBracket);
+    } else {
+      const index = closeBracket.indexOf(line[charIndx]);
+      if (index != -1) {
+        stack.push(openBracket[index]);
+      }
     }
+  }
+
+  if (stack.length != 0) { 
+    relative = false;
   }
 
   for (let lineInd = position.line - 1; lineInd >= 0; --lineInd) {
     const line = document.lineAt(lineInd).text;
     for (let charIndx = line.length - 1; charIndx >= 0; charIndx--) { 
-      if (line[charIndx] == openBracket) {
+      if (openBracket.indexOf(line[charIndx]) != -1) {
         if (stack.length == 0) {
           return new vscode.Position(lineInd, charIndx);
         } else {
+          if (line[charIndx] != stack[0]) // bracket is wrong, here we should finish
+            return new vscode.Position(lineInd, charIndx);
           stack.pop();
           if (stack.length == 0 && relative == false) { 
             return new vscode.Position(lineInd, charIndx);
           }
         }
-      } else if (line[charIndx] == closeBracket) { 
-        stack.push(closeBracket);
+      } else if (closeBracket.indexOf(line[charIndx]) != -1) { 
+        const index = closeBracket.indexOf(line[charIndx]);
+        if (index != -1) {
+          stack.push(openBracket[index]);
+        }
       }
     }
   }
@@ -74,7 +88,7 @@ function getStartLine(document: vscode.TextDocument, position: vscode.Position, 
 }
 
 function getIndentLine(document: vscode.TextDocument, range?: vscode.Range) {
-  const startLine = getStartLine(document, range?.start || wholeDocumentRange.start, "{", "}", true)
+  const startLine = getStartLine(document, range?.start || wholeDocumentRange.start, "{(", "})", true)
   
   let indent = document.getText(
     new vscode.Range(
