@@ -140,8 +140,9 @@ function format(request: {
       new vscode.Position(request.range?.end.line || wholeDocumentRange.end.line, wholeDocumentRange.end.character)
     );
 
-    const indentPrefix = getIndentLine(request.document, rangeFromBeginningOfLine)
-    const input = indentPrefix + "\n" + request.document.getText(rangeFromBeginningOfLine) + "//" + randomLineFormatterId;
+    const indentPrefix = getIndentLine(request.document, rangeFromBeginningOfLine);
+    const rawInput = request.document.getText(rangeFromBeginningOfLine);
+    const input = indentPrefix + "\n" + rawInput + "//" + randomLineFormatterId;
     console.log(input)
     if (input.trim() === "") return [];
     const userDefinedParams = userDefinedFormatOptionsForDocument(
@@ -181,18 +182,41 @@ function format(request: {
       ],
       {
         encoding: "utf8",
-        input,
+        input
       },
     );
-    const indexOfNextLine = newContents.indexOf(randomLineFormatterId) + randomLineFormatterId.length
-    if (newContents[indexOfNextLine] == '\n') {
-      newContents = newContents.substring(indexOfNextLine + 1)
-    } else {
-      newContents = newContents.substring(indexOfNextLine)
-    }
+    const firstIndex = newContents.indexOf(randomLineFormatterId);
+    const indexOfNextLine = firstIndex + randomLineFormatterId.length
     const lastIndexOfRandomLine = newContents.lastIndexOf(randomLineFormatterId);
-    newContents = newContents.substring(0, lastIndexOfRandomLine);
-    newContents = newContents.substring(0, getIndexOfCut(newContents));
+    if (firstIndex === -1 || firstIndex === lastIndexOfRandomLine) {
+      const input = request.document.getText(rangeFromBeginningOfLine);
+      newContents = execShellSync(
+        swiftFormatPath[0],
+        [
+          ...swiftFormatPath.slice(1),
+          "stdin",
+          "--stdinpath",
+          fileName,
+          ...userDefinedParams.options,
+          ...(request.parameters || []),
+          ...formattingParameters,
+        ],
+        {
+          encoding: "utf8",
+          input
+        },
+      );
+    } else {
+      if (newContents[indexOfNextLine] == '\n') {
+        newContents = newContents.substring(indexOfNextLine + 1)
+      } else {
+        newContents = newContents.substring(indexOfNextLine)
+      }
+      //index is changed
+      const lastIndexOfRandomLine = newContents.lastIndexOf(randomLineFormatterId);
+      newContents = newContents.substring(0, lastIndexOfRandomLine);
+      newContents = newContents.substring(0, getIndexOfCut(newContents));
+    }
 
     return newContents !== request.document.getText(rangeFromBeginningOfLine)
       ? [
