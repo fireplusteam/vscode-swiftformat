@@ -188,8 +188,8 @@ function format(request: {
     const firstIndex = newContents.indexOf(randomLineFormatterId);
     const indexOfNextLine = firstIndex + randomLineFormatterId.length
     const lastIndexOfRandomLine = newContents.lastIndexOf(randomLineFormatterId);
-    if (firstIndex === -1 || firstIndex === lastIndexOfRandomLine) {
-      const input = request.document.getText(rangeFromBeginningOfLine);
+    if (firstIndex === -1 || firstIndex === lastIndexOfRandomLine || request.range === undefined) {
+      const input = request.range === undefined ? request.document.getText() : request.document.getText(rangeFromBeginningOfLine);
       newContents = execShellSync(
         swiftFormatPath[0],
         [
