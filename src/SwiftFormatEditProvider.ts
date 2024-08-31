@@ -124,6 +124,26 @@ function getIndexOfCut(line: string) {
   }
 }
 
+function isContentModifiedProperly(modifiedContent: string, originalContent: string) {
+  if (modifiedContent !== originalContent) {
+    let i = 0, origI = 0;
+    for (; i < modifiedContent.length && origI < originalContent.length;++origI) {
+      if (modifiedContent[i] != originalContent[origI]) {
+        if (!(originalContent[origI] == '(' || originalContent[origI] == ')')) {
+          return true;
+        }
+      } else {
+        ++i;
+      }
+    }
+    if (i == modifiedContent.length && origI == originalContent.length) {
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+
 function format(request: {
   document: vscode.TextDocument;
   parameters?: string[];
@@ -217,8 +237,7 @@ function format(request: {
       newContents = newContents.substring(0, lastIndexOfRandomLine);
       newContents = newContents.substring(0, getIndexOfCut(newContents));
     }
-
-    return newContents !== request.document.getText(rangeFromBeginningOfLine)
+    return isContentModifiedProperly(newContents, request.document.getText(rangeFromBeginningOfLine))
       ? [
           vscode.TextEdit.replace(
             request.document.validateRange(rangeFromBeginningOfLine || wholeDocumentRange),
