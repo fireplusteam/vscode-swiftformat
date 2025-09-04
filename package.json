@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/vknabel/vscode-swiftformat"
   },
-  "version": "1.7.1",
+  "version": "1.7.2",
   "license": "MIT",
   "author": {
     "name": "Valentin Knabel",
@@ -70,7 +70,7 @@
         },
         "swiftformat.path": {
           "description": "The location of your globally installed SwiftFormat.",
-          "scope": "machine",
+          "scope": "machine-overridable",
           "default": [
             "/usr/bin/env",
             "swiftformat"

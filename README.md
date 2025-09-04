@@ -47,7 +47,7 @@ let package = Package(
 | `swiftformat.enable`                      | `Bool`     | `true`             | Whether SwiftFormat should actually do something.                                          |
 | `swiftformat.onlyEnableOnSwiftPMProjects` | `Bool`     | `false`            | Requires and uses a SwiftFormat as SwiftPM dependency. This will cause the extension to build the Swift package upon first launch. |
 | `swiftformat.onlyEnableWithConfig`        | `Bool`     | `false`            | Only format if config present.                                                             |
-| `swiftformat.path`                        | `[String]  or String`            | `swiftformat`                                                                              | The location of the globally installed SwiftFormat (resolved with the current path if only a filename). |
+| `swiftformat.path`                        | `[String]  or String`            | `["/usr/bin/env", "swiftformat"]`                                                        | The location of the installed SwiftFormat (global/workspace-relative). |
 | `swiftformat.options`                     | `[String]` | `[]`               | Additional [options for SwiftFormat](https://github.com/nicklockwood/SwiftFormat#options). |
 | `swiftformat.configSearchPaths`           | `[String]` | `[".swiftformat"]` | Possible paths for SwiftFormat config.                                                     |
 
