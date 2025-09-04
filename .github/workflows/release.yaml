@@ -16,10 +16,10 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm i
+        run: yarn
 
       - name: Install vsce and ovsx
-        run: npm i -g vsce ovsx
+        run: yarn global add vsce ovsx
 
       - name: Publish for VS Code
         run: vsce publish -p ${{ secrets.VSCE_TOKEN }}
