@@ -295,13 +295,13 @@ export class SwiftFormatEditProvider
     });
     // this is workaround to fix cursor after . is formatted, as vim has a bug
     // but with new swiftformat version this seems to be not needed
-    // if (result.length > 0 && vscode.window.activeTextEditor) {
-    //   const edit = result[0];
-    //   const before = document.getText(edit.range);
-    //   const after = edit.newText;
-    //   const selection = vscode.window.activeTextEditor.selection;
-    //   moveCursor(selection.end.line, selection.end.character, before, after);
-    // }
+    if (result.length > 0 && vscode.window.activeTextEditor) {
+      const edit = result[0];
+      const before = document.getText(edit.range);
+      const after = edit.newText;
+      const selection = vscode.window.activeTextEditor.selection;
+      moveCursor(selection.end.line, selection.end.character, before, after);
+    }
 
     return result;
   }
