@@ -167,15 +167,36 @@ async function moveCursor(
   afterEdit: string,
 ) {
   if (vscode.window.activeTextEditor) {
-    let charDiff = startCharacterPos + afterEdit.length - beforeEdit.length;
-    const myPos = new vscode.Position(startLinePos, charDiff);
+    const countNewLines = (line: string) => {
+      let cnt = 0;
+      for (const char of line) {
+        if (char === "\n") cnt++;
+      }
+      return cnt;
+    };
+    const extractLastLine = (content: string) => {
+      let ret = "";
+      for (let i = content.length - 1; i >= 0; --i) {
+        if (content[i] === "\n") {
+          break;
+        }
+        ret += content[i];
+      }
+      return ret;
+    };
+    const diffLines = countNewLines(afterEdit) - countNewLines(beforeEdit);
+    let charDiff =
+      startCharacterPos +
+      extractLastLine(afterEdit).length -
+      extractLastLine(beforeEdit).length;
+    const myPos = new vscode.Position(startLinePos + diffLines, charDiff);
     setTimeout(() => {
       if (vscode.window.activeTextEditor) {
         vscode.window.activeTextEditor.selections = [
           new vscode.Selection(myPos, myPos),
         ];
       }
-    }, 2);
+    }, 1);
   }
 }
 
